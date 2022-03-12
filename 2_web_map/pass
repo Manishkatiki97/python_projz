@@ -1,0 +1,97 @@
+{ 
+    "enabled": true, 
+    "feedName": "iex", 
+    "fileFormat": "CSV", 
+    "delimiter": "\t",
+    "fileRegex": "^[A-CE-Z]_[A-Za-z0-9_]*_R._R_AGTSCHEDACT_F_.*.gz$", 
+    "archiveType": "GZIP", 
+    "sourceAvroSchemaName": "iex_r_agtschedact_src", 
+    "targetAvroSchemaName": "iex_r_agtschedact_tgt", 
+    "dataLibrary": "DP-DLIB-CustC", 
+    "invenioFeedName": "21187_ATT CCT NICE IEX WFM_zlpy18382.vci.att.com-CALL_CONTAINER ", 
+    "rimPolicy": "CUS-200", 
+    "retentionAgeInDays": "730", 
+    "rejectZeroByte": true, 
+    "rejectDuplicate": true, 
+    "headerCount": 1, 
+    "rejectEmptyHeader": false, 
+    "footerCount": 1, 
+    "rejectEmptyFooter": false, 
+    "validations": [
+          {
+              "enabled": true,
+              "validationType": "ROW_COUNT",
+              "source": "${trailer}",
+              "sourceRegex": "([0-9]{1,})",
+              "offset": 0
+          }
+          ], 
+    "partitions": [ 
+      { 
+        "enabled": true, 
+        "partitionType": "FILE_NAME", 
+        "partitionLevel": 1, 
+        "partitionKey": "data_dt", 
+        "partitionValue": "${sourceFileName}", 
+        "valueRegex": ".*(\\d{8})_\\d{14}.*" 
+      } 
+    ], 
+    "loadTargets": [ 
+      { 
+        "enabled": true, 
+        "sourceType": "DATALAKE", 
+        "pushContentType": "ORC", 
+        "tableName": "r_agtschedact", 
+        "databaseName": "iex_gold", 
+        "hdfsPath": "/km/gold", 
+        "principal": "kmiexl@COREITKGMTNC20PROD01.PROD.ATT.COM", 
+        "keytab": "/opt/data/stage01/logons/.krb/kmiexl.keytab", 
+        "truncate": false 
+      } 
+    ], 
+    "transformations": [ 
+      { 
+        "enabled": true, 
+        "transformationType": "ADD_COLUMN", 
+        "input": "${now():format('yyyy/MM/dd hh:mm:ss')}", 
+        "inputRegex": "(.*)", 
+        "inputTimezone": "UTC", 
+        "output": "load_ts" 
+      }, 
+      { 
+        "enabled": true, 
+        "transformationType": "ADD_COLUMN", 
+        "input": "${sourceFileName}", 
+        "inputRegex": "(.*)", 
+        "output": "src_file_name" 
+      }, 
+      { 
+        "enabled": true, 
+        "transformationType": "ADD_COLUMN", 
+        "input": "${sourceFileName}", 
+        "inputRegex": "^[A-Za-z]+_([0-9]*[A-Za-z0-9]+[0-9]*[_]*[\\d]*[A-Za-z]+[0-9]*[A-Za-z0-9]*)_.*$", 
+        "output": "cust_name" 
+      }, 
+      { 
+        "enabled": true, 
+        "transformationType": "ADD_COLUMN", 
+        "input": "${sourceFileName}", 
+        "inputRegex": "([A-Za-z]*)_.*.$", 
+        "output": "node_name" 
+      }, 
+      { 
+       "enabled": true, 
+        "transformationType": "ADD_COLUMN", 
+        "input": "${sourceFileName}", 
+        "inputRegex": "^[A-Za-z]+_[0-9]*[A-Za-z0-9]+[0-9]*[_]*[\\d]*[A-Za-z]+[0-9]*[A-Za-z0-9]*_(\\d+)[^\\d]*_.*$", 
+        "output": "cust_id" 
+      },
+      { 
+        "enabled": true, 
+        "transformationType": "ADD_COLUMN", 
+        "input": "${sourceFileName}", 
+        "inputRegex": "^[A-Za-z]+_[0-9]*[A-Za-z0-9]+[0-9]*[_]*[\\d]*[A-Za-z]+[0-9]*[A-Za-z0-9]*_[0-9]*_([A-Za-z0-9]+[0-9])_.*$", 
+        "output": "release" 
+      }
+    ] 
+  }
